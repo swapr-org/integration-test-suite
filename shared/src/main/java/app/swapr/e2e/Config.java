@@ -9,7 +9,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 final class Config {
 
@@ -22,7 +21,7 @@ final class Config {
 
   private static final long DEFAULT_WARMUP_TIMEOUT_SECONDS = 180;
   private static final Map<String, String> DOT_ENV = loadDotEnv();
-  private static final String GENERATED_RUN_ID = UUID.randomUUID().toString().substring(0, 8);
+  private static final String LOCAL_RUN_ID = "local";
 
   private Config() {
   }
@@ -44,7 +43,7 @@ final class Config {
   }
 
   static String runId() {
-    return get(RUN_ID).orElse(GENERATED_RUN_ID);
+    return get(RUN_ID).orElse(LOCAL_RUN_ID);
   }
 
   static Duration warmupTimeout() {

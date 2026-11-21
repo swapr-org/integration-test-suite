@@ -22,7 +22,7 @@ Every setting is read from an environment variable first, then from a `.env` fil
 | `SUPABASE_PUBLISHABLE_KEY` | yes | Supabase publishable key, used for password sign-in. |
 | `SUPABASE_SECRET_KEY` | yes | Supabase secret key, used for the admin API. Secret. |
 | `WARMUP_TIMEOUT_SECONDS` | no | How long warm-up waits for every service to report healthy. Default 180. |
-| `RUN_ID` | no | Tags test user emails. CI sets it to `<run id>-<run attempt>`; locally a random short ID is generated. |
+| `RUN_ID` | no | Tags test user emails. CI sets it to `<run id>-<run attempt>`; locally it is `local`. |
 
 A required setting that is missing fails the run with a message naming it.
 
