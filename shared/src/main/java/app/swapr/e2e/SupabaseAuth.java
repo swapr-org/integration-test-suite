@@ -57,14 +57,9 @@ final class SupabaseAuth {
   }
 
   private static HttpRequest.Builder adminRequest(String path) {
-    String secretKey = Config.require(Config.SUPABASE_SECRET_KEY);
-    HttpRequest.Builder builder = HttpRequest.newBuilder(uri(path))
+    return HttpRequest.newBuilder(uri(path))
         .timeout(REQUEST_TIMEOUT)
-        .header("apikey", secretKey);
-    if (!secretKey.startsWith("sb_")) {
-      builder.header("Authorization", "Bearer " + secretKey);
-    }
-    return builder;
+        .header("apikey", Config.require(Config.SUPABASE_SECRET_KEY));
   }
 
   private static URI uri(String path) {

@@ -13,18 +13,15 @@ public enum Service {
     this.urlSetting = urlSetting;
   }
 
-  /** Returns the service's name, as used in messages. */
-  public String displayName() {
+  String displayName() {
     return displayName;
   }
 
-  /** Returns the name of the setting that holds the service's base URL. */
-  public String urlSetting() {
+  String urlSetting() {
     return urlSetting;
   }
 
-  /** Returns the service's base URL without a trailing slash, failing if its setting is missing. */
-  public String baseUrl() {
+  String baseUrl() {
     return Config.stripTrailingSlash(Config.require(urlSetting));
   }
 }

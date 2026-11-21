@@ -18,8 +18,7 @@ import java.util.concurrent.Future;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-/** Polls each service's health endpoint in parallel until it reports {@code UP}. */
-public final class WarmUp {
+final class WarmUp {
 
   private static final Duration POLL_INTERVAL = Duration.ofSeconds(5);
   private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
@@ -30,8 +29,7 @@ public final class WarmUp {
   private WarmUp() {
   }
 
-  /** Returns empty when every service is healthy within the timeout, or a message naming each that is not. */
-  public static Optional<String> run(List<Service> services, Duration timeout) {
+  static Optional<String> run(List<Service> services, Duration timeout) {
     List<String> missing = new ArrayList<>();
     Map<Service, String> urls = new EnumMap<>(Service.class);
     for (Service service : services) {
@@ -52,17 +50,15 @@ public final class WarmUp {
         .connectTimeout(CONNECT_TIMEOUT)
         .followRedirects(HttpClient.Redirect.NORMAL)
         .build();
-    Map<Service, Future<String>> results = new EnumMap<>(Service.class);
+    Map<Service, Future<Optional<String>>> results = new EnumMap<>(Service.class);
     try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
       urls.forEach((service, url) -> results.put(service, executor.submit(() -> poll(client, url, deadline))));
     }
 
     List<String> failures = new ArrayList<>();
     results.forEach((service, future) -> {
-      String lastProblem = outcome(future);
-      if (lastProblem != null) {
-        failures.add(service.displayName() + " (" + urls.get(service) + "): " + lastProblem);
-      }
+      outcome(future).ifPresent(problem ->
+          failures.add(service.displayName() + " (" + urls.get(service) + "): " + problem));
     });
     if (failures.isEmpty()) {
       return Optional.empty();
@@ -71,19 +67,20 @@ public final class WarmUp {
         + " seconds (" + Config.WARMUP_TIMEOUT_SECONDS + "):\n  - " + String.join("\n  - ", failures));
   }
 
-  private static String outcome(Future<String> future) {
+  private static Optional<String> outcome(Future<Optional<String>> future) {
     try {
       return future.get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      return "warm-up was interrupted";
+      return Optional.of("warm-up was interrupted");
     } catch (ExecutionException e) {
-      return "warm-up error: " + e.getCause();
+      return Optional.of("warm-up error: " + e.getCause());
     }
   }
 
-  private static String poll(HttpClient client, String url, Instant deadline) throws InterruptedException {
-    String lastProblem = "no response yet";
+  private static Optional<String> poll(HttpClient client, String url, Instant deadline)
+      throws InterruptedException {
+    Optional<String> lastProblem = Optional.of("no response yet");
     while (true) {
       Instant attemptStart = Instant.now();
       if (!attemptStart.isBefore(deadline)) {
@@ -92,8 +89,8 @@ public final class WarmUp {
       Duration remaining = Duration.between(attemptStart, deadline);
       Duration requestTimeout = remaining.compareTo(REQUEST_TIMEOUT) < 0 ? remaining : REQUEST_TIMEOUT;
       lastProblem = check(client, url, requestTimeout);
-      if (lastProblem == null) {
-        return null;
+      if (lastProblem.isEmpty()) {
+        return lastProblem;
       }
       Duration wait = POLL_INTERVAL.minus(Duration.between(attemptStart, Instant.now()));
       Duration untilDeadline = Duration.between(Instant.now(), deadline);
@@ -106,7 +103,8 @@ public final class WarmUp {
     }
   }
 
-  private static String check(HttpClient client, String url, Duration requestTimeout) throws InterruptedException {
+  private static Optional<String> check(HttpClient client, String url, Duration requestTimeout)
+      throws InterruptedException {
     HttpRequest request = HttpRequest.newBuilder(URI.create(url))
         .timeout(requestTimeout)
         .header("Accept", "application/json")
@@ -114,24 +112,24 @@ public final class WarmUp {
         .build();
     try {
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-      String status = healthStatus(response.body());
-      if (response.statusCode() == 200 && "UP".equals(status)) {
-        return null;
+      Optional<String> status = healthStatus(response.body());
+      if (response.statusCode() == 200 && status.equals(Optional.of("UP"))) {
+        return Optional.empty();
       }
-      return "HTTP " + response.statusCode() + (status == null ? "" : ", status " + status);
+      return Optional.of("HTTP " + response.statusCode() + status.map(value -> ", status " + value).orElse(""));
     } catch (InterruptedException e) {
       throw e;
     } catch (Exception e) {
-      return e.getClass().getSimpleName() + (e.getMessage() == null ? "" : ": " + e.getMessage());
+      return Optional.of(e.getClass().getSimpleName() + (e.getMessage() == null ? "" : ": " + e.getMessage()));
     }
   }
 
-  private static String healthStatus(String body) {
+  private static Optional<String> healthStatus(String body) {
     try {
       JsonNode status = JSON.readTree(body).get("status");
-      return status == null || !status.isString() ? null : status.asString();
+      return status == null || !status.isString() ? Optional.empty() : Optional.of(status.asString());
     } catch (RuntimeException e) {
-      return null;
+      return Optional.empty();
     }
   }
 }
