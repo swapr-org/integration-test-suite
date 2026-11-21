@@ -1,0 +1,75 @@
+name: e2e
+
+on:
+  workflow_dispatch:
+    inputs:
+      all:
+        description: Run every module (ignores the module choices below)
+        type: boolean
+        default: true
+      user-service:
+        description: Run user-service-tests
+        type: boolean
+        default: false
+  workflow_call:
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ github.repository_owner }}/integration-test-suite
+          ref: ${{ github.repository == format('{0}/integration-test-suite', github.repository_owner) && github.ref || 'main' }}
+
+      - name: Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Build arguments
+        id: args
+        env:
+          ALL: ${{ inputs.all }}
+          USER_SERVICE: ${{ inputs.user-service }}
+        run: |
+          if [ "$ALL" != "false" ]; then
+            echo "Running every module"
+            echo "maven=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          modules=()
+          if [ "$USER_SERVICE" = "true" ]; then modules+=("user-service-tests"); fi
+          if [ ${#modules[@]} -eq 0 ]; then
+            echo "::error::No module chosen: either tick 'all' or choose at least one module."
+            exit 1
+          fi
+          joined=$(IFS=,; echo "${modules[*]}")
+          echo "Running modules: $joined"
+          echo "maven=-pl $joined -am" >> "$GITHUB_OUTPUT"
+
+      - name: Run
+        env:
+          RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          USER_SERVICE_URL: ${{ vars.USER_SERVICE_URL }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          MAVEN_ARGS_MODULES: ${{ steps.args.outputs.maven }}
+        run: ./mvnw -B verify $MAVEN_ARGS_MODULES
+
+      - name: Reports
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: surefire-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: "**/target/surefire-reports/"
+          if-no-files-found: warn
