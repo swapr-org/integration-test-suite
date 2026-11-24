@@ -45,6 +45,13 @@ class CitySearchTest {
     }
   }
 
+  @Test
+  void citySearchTreatsWildcardsAsPlainCharacters() {
+    List<Map<String, Object>> cities = search("%%");
+
+    assertTrue(cities.isEmpty(), "Expected no cities, got " + cities);
+  }
+
   private static List<Map<String, Object>> search(String query) {
     return given()
         .spec(Requests.spec(Service.USER_SERVICE, user))
