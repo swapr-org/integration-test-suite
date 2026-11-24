@@ -23,10 +23,11 @@ Every setting is read from an environment variable first, then from a `.env` fil
 | `SUPABASE_URL` | yes | QA Supabase project URL. |
 | `SUPABASE_PUBLISHABLE_KEY` | yes | Supabase publishable key, used for password sign-in. |
 | `SUPABASE_SECRET_KEY` | yes | Supabase secret key, used for the admin API. Secret. |
+| `INTERNAL_TOKEN` | yes | Token for services' internal endpoints, sent as `X-Internal-Token` when deleting test data. Same value as the QA services' `INTERNAL_TOKEN`. Secret. |
 | `WARMUP_TIMEOUT_SECONDS` | no | How long warm-up waits for every service to report healthy. Default 180. |
 | `RUN_ID` | no | Tags test user emails. CI sets it to `<run id>-<run attempt>`; locally it is `local`. |
 
-A required setting that is missing fails the run with a message naming it.
+A required setting that is missing fails the run with a message naming it. `INTERNAL_TOKEN` is checked in warm-up, before any test, whenever a known service has a test-data deletion path.
 
 ## Running locally
 
@@ -43,8 +44,12 @@ The console shows every test by name with its result. Reports are written to `<m
 ## What happens in a run
 
 - **Warm-up:** before the first test class in each module, the suite polls every known service's `/actuator/health` in parallel until each returns 200 with status `UP`. If any service doesn't within `WARMUP_TIMEOUT_SECONDS`, every test in that module fails with a message naming each failing service and its last status or error.
-- **Test users:** `TestUsers.create()` creates a confirmed Supabase user with email `e2e+<runId>-<random>@example.com`, signs it in and returns its ID, email and access token. `Requests.spec(Service.USER_SERVICE, user)` returns a RestAssured request specification acting as that user; `Requests.spec(Service.USER_SERVICE)` returns an anonymous one.
-- **Cleanup:** when every test in a module has finished, whatever the results, every user the module created is deleted from Supabase. A failed deletion is logged with the user's ID and email and doesn't change the run's result.
+- **Test users:** `TestUsers.create()` creates a confirmed Supabase user with email `e2e+<runId>-<random>@example.com`, signs it in and returns its ID, email and access token. `Requests.spec(Service.USER_SERVICE, user)` returns a RestAssured request specification acting as that user; `Requests.spec(Service.USER_SERVICE)` returns an anonymous one. `Requests.internal(Service.USER_SERVICE)` returns one that sends `X-Internal-Token` and no `Authorization` header.
+- **Cleanup:** when every test in a module has finished, whatever the results, each user the module created is cleaned up in two steps:
+  1. **Test data:** for every `Service` with a test-data deletion path, the suite calls `DELETE` on that path with the internal token, removing everything the user owns in that service.
+  2. **Supabase user:** the user is then deleted from Supabase, even if a data deletion failed.
+
+  A data deletion that doesn't return 204, or a failed user deletion, is logged as a warning with the service, the user's ID and email, and doesn't change the run's result. A summary line counts the data deletions and the user deletions.
 
 ## GitHub Actions
 
@@ -69,6 +74,7 @@ Surefire reports are uploaded as a run artifact named `surefire-reports-<run id>
 Create these at the GitHub org level from the QA Supabase project and the QA Render service:
 
 - org secret `SUPABASE_SECRET_KEY`;
+- org secret `INTERNAL_TOKEN`, with the same value as the QA services' `INTERNAL_TOKEN` env var on Render;
 - org variables `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `USER_SERVICE_URL` and `LISTING_SERVICE_URL`.
 
 The suite repo stays public, so any org repo can call its workflow.
@@ -79,4 +85,4 @@ The suite repo stays public, so any org repo can call its workflow.
 2. Add a `<service>-tests` module with the same `pom.xml` shape as `user-service-tests`, and list it in the root `pom.xml`.
 3. Add the URL setting to `.env.example`, this README, the org variables and the `Run` step's `env` in the workflow.
 4. Add a boolean dispatch input for the module and map it in the workflow's `Build arguments` step.
-5. If the service stores user data, add a cleanup step that calls its test-data deletion endpoint before the Supabase users are deleted.
+5. If the service stores user data, set its test-data deletion path on its `Service` entry.
