@@ -36,6 +36,13 @@ class ProfileAuthTest {
     given()
         .spec(Requests.spec(Service.USER_SERVICE))
         .when()
+        .delete("/v1/users/me")
+        .then()
+        .statusCode(401);
+
+    given()
+        .spec(Requests.spec(Service.USER_SERVICE))
+        .when()
         .get("/v1/users/{id}", UUID.randomUUID())
         .then()
         .statusCode(401);

@@ -40,10 +40,6 @@ final class WarmUp {
         missing.add(service.urlSetting());
       }
     }
-    boolean storesUserData = services.stream().anyMatch(service -> service.testDataDeletionPath().isPresent());
-    if (storesUserData && Config.get(Config.INTERNAL_TOKEN).isEmpty()) {
-      missing.add(Config.INTERNAL_TOKEN);
-    }
     if (!missing.isEmpty()) {
       return Optional.of("Warm-up failed: missing required setting(s) " + String.join(", ", missing)
           + ". Set them as environment variables or in the suite's .env file.");

@@ -22,13 +22,6 @@ public final class Requests {
         .build();
   }
 
-  /** Returns a request specification for the service's base URL with the internal token and no user JWT. */
-  public static RequestSpecification internal(Service service) {
-    return builder(service)
-        .addHeader("X-Internal-Token", Config.require(Config.INTERNAL_TOKEN))
-        .build();
-  }
-
   private static RequestSpecBuilder builder(Service service) {
     return new RequestSpecBuilder()
         .setBaseUri(service.baseUrl())

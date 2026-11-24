@@ -16,7 +16,6 @@ final class Config {
   static final String SUPABASE_URL = "SUPABASE_URL";
   static final String SUPABASE_PUBLISHABLE_KEY = "SUPABASE_PUBLISHABLE_KEY";
   static final String SUPABASE_SECRET_KEY = "SUPABASE_SECRET_KEY";
-  static final String INTERNAL_TOKEN = "INTERNAL_TOKEN";
   static final String WARMUP_TIMEOUT_SECONDS = "WARMUP_TIMEOUT_SECONDS";
   static final String RUN_ID = "RUN_ID";
 
