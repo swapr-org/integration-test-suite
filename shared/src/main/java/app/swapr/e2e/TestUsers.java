@@ -18,8 +18,9 @@ public final class TestUsers {
     String password = randomHex(24);
     UUID id = SupabaseAuth.createConfirmedUser(email, password);
     CreatedUsers.INSTANCE.record(id, email);
-    String accessToken = SupabaseAuth.signIn(email, password);
-    return new TestUser(id, email, accessToken);
+    TestUser user = new TestUser(id, email, SupabaseAuth.signIn(email, password));
+    CreatedUsers.INSTANCE.signedIn(user);
+    return user;
   }
 
   private static String randomHex(int bytes) {

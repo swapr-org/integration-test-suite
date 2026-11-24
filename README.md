@@ -44,7 +44,11 @@ The console shows every test by name with its result. Reports are written to `<m
 
 - **Warm-up:** before the first test class in each module, the suite polls every known service's `/actuator/health` in parallel until each returns 200 with status `UP`. If any service doesn't within `WARMUP_TIMEOUT_SECONDS`, every test in that module fails with a message naming each failing service and its last status or error.
 - **Test users:** `TestUsers.create()` creates a confirmed Supabase user with email `e2e+<runId>-<random>@example.com`, signs it in and returns its ID, email and access token. `Requests.spec(Service.USER_SERVICE, user)` returns a RestAssured request specification acting as that user; `Requests.spec(Service.USER_SERVICE)` returns an anonymous one.
-- **Cleanup:** when every test in a module has finished, whatever the results, every user the module created is deleted from Supabase. A failed deletion is logged with the user's ID and email and doesn't change the run's result.
+- **Cleanup:** when every test in a module has finished, whatever the results, each user the module created is cleaned up in two steps:
+  1. **User data:** for every `Service` with a user data deletion path, the suite calls `DELETE` on that path as the user, removing what the user owns in that service.
+  2. **Supabase user:** the user is then deleted from Supabase, even if a data deletion failed.
+
+  A data deletion that doesn't return 204 or can't be attempted because the user never signed in, or a failed user deletion, is logged as a warning with the service, the user's ID and email, and doesn't change the run's result. A summary line counts the data deletions and the user deletions.
 
 ## GitHub Actions
 
@@ -79,4 +83,4 @@ The suite repo stays public, so any org repo can call its workflow.
 2. Add a `<service>-tests` module with the same `pom.xml` shape as `user-service-tests`, and list it in the root `pom.xml`.
 3. Add the URL setting to `.env.example`, this README, the org variables and the `Run` step's `env` in the workflow.
 4. Add a boolean dispatch input for the module and map it in the workflow's `Build arguments` step.
-5. If the service stores user data, add a cleanup step that calls its test-data deletion endpoint before the Supabase users are deleted.
+5. If the service stores user data, set its user data deletion path on its `Service` entry.
