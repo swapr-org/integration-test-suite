@@ -13,6 +13,7 @@
   <modules>
     <module>shared</module>
     <module>user-service-tests</module>
+    <module>listing-service-tests</module>
   </modules>
 
   <properties>

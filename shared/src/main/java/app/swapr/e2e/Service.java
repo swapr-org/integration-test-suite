@@ -3,7 +3,8 @@ package app.swapr.e2e;
 /** The services the suite knows about, each with the setting that holds its QA base URL. */
 public enum Service {
 
-  USER_SERVICE("user-service", "USER_SERVICE_URL");
+  USER_SERVICE("user-service", "USER_SERVICE_URL"),
+  LISTING_SERVICE("listing-service", "LISTING_SERVICE_URL");
 
   private final String displayName;
   private final String urlSetting;
