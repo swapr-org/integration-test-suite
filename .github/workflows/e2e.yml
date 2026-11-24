@@ -17,6 +17,10 @@ on:
         default: false
       trade-service:
         description: Run trade-service-tests
+      chat-service:
+        description: Run chat-service-tests
+      feed-service:
+        description: Run feed-service-tests
         type: boolean
         default: false
   workflow_call:
@@ -50,6 +54,8 @@ jobs:
           USER_SERVICE: ${{ inputs.user-service }}
           LISTING_SERVICE: ${{ inputs.listing-service }}
           TRADE_SERVICE: ${{ inputs.trade-service }}
+          CHAT_SERVICE: ${{ inputs.chat-service }}
+          FEED_SERVICE: ${{ inputs.feed-service }}
         run: |
           if [ "$ALL" != "false" ]; then
             echo "Running every module"
@@ -60,6 +66,8 @@ jobs:
           if [ "$USER_SERVICE" = "true" ]; then modules+=("user-service-tests"); fi
           if [ "$LISTING_SERVICE" = "true" ]; then modules+=("listing-service-tests"); fi
           if [ "$TRADE_SERVICE" = "true" ]; then modules+=("trade-service-tests"); fi
+          if [ "$CHAT_SERVICE" = "true" ]; then modules+=("chat-service-tests"); fi
+          if [ "$FEED_SERVICE" = "true" ]; then modules+=("feed-service-tests"); fi
           if [ ${#modules[@]} -eq 0 ]; then
             echo "::error::No module chosen: either tick 'all' or choose at least one module."
             exit 1
@@ -74,6 +82,8 @@ jobs:
           USER_SERVICE_URL: ${{ vars.USER_SERVICE_URL }}
           LISTING_SERVICE_URL: ${{ vars.LISTING_SERVICE_URL }}
           TRADE_SERVICE_URL: ${{ vars.TRADE_SERVICE_URL }}
+          CHAT_SERVICE_URL: ${{ vars.CHAT_SERVICE_URL }}
+          FEED_SERVICE_URL: ${{ vars.FEED_SERVICE_URL }}
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
