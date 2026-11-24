@@ -6,7 +6,8 @@ import java.util.Optional;
 public enum Service {
 
   USER_SERVICE("user-service", "USER_SERVICE_URL", "/v1/users/me"),
-  LISTING_SERVICE("listing-service", "LISTING_SERVICE_URL", null);
+  LISTING_SERVICE("listing-service", "LISTING_SERVICE_URL", null),
+  TRADE_SERVICE("trade-service", "TRADE_SERVICE_URL", null);
 
   private final String displayName;
   private final String urlSetting;
