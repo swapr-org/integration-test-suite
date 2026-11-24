@@ -15,6 +15,10 @@ on:
         description: Run listing-service-tests
         type: boolean
         default: false
+      feed-service:
+        description: Run feed-service-tests
+        type: boolean
+        default: false
   workflow_call:
   schedule:
     - cron: "0 6 * * 1"
@@ -45,6 +49,7 @@ jobs:
           ALL: ${{ inputs.all }}
           USER_SERVICE: ${{ inputs.user-service }}
           LISTING_SERVICE: ${{ inputs.listing-service }}
+          FEED_SERVICE: ${{ inputs.feed-service }}
         run: |
           if [ "$ALL" != "false" ]; then
             echo "Running every module"
@@ -54,6 +59,7 @@ jobs:
           modules=()
           if [ "$USER_SERVICE" = "true" ]; then modules+=("user-service-tests"); fi
           if [ "$LISTING_SERVICE" = "true" ]; then modules+=("listing-service-tests"); fi
+          if [ "$FEED_SERVICE" = "true" ]; then modules+=("feed-service-tests"); fi
           if [ ${#modules[@]} -eq 0 ]; then
             echo "::error::No module chosen: either tick 'all' or choose at least one module."
             exit 1
@@ -67,6 +73,7 @@ jobs:
           RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
           USER_SERVICE_URL: ${{ vars.USER_SERVICE_URL }}
           LISTING_SERVICE_URL: ${{ vars.LISTING_SERVICE_URL }}
+          FEED_SERVICE_URL: ${{ vars.FEED_SERVICE_URL }}
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
