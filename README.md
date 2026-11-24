@@ -9,6 +9,7 @@ HTTP-level end-to-end tests for swapr, run against the deployed QA services. Jav
 | `shared` | Configuration, the list of known services, warm-up, Supabase test users, cleanup and request helpers. Main code only. |
 | `user-service-tests` | End-to-end tests for user-service. |
 | `listing-service-tests` | End-to-end tests for listing-service. Empty for now. |
+| `trade-service-tests` | End-to-end tests for trade-service. Empty for now. |
 | `chat-service-tests` | End-to-end tests for chat-service. Empty for now. |
 | `feed-service-tests` | End-to-end tests for feed-service. Empty for now. |
 
@@ -22,6 +23,7 @@ Every setting is read from an environment variable first, then from a `.env` fil
 |---|---|---|
 | `USER_SERVICE_URL` | yes | QA base URL of user-service. |
 | `LISTING_SERVICE_URL` | yes | QA base URL of listing-service. |
+| `TRADE_SERVICE_URL` | yes | QA base URL of trade-service. |
 | `CHAT_SERVICE_URL` | yes | QA base URL of chat-service. |
 | `FEED_SERVICE_URL` | yes | QA base URL of feed-service. |
 | `SUPABASE_URL` | yes | QA Supabase project URL. |
@@ -77,6 +79,7 @@ Surefire reports are uploaded as a run artifact named `surefire-reports-<run id>
 Create these at the GitHub org level from the QA Supabase project and the QA Render service:
 
 - org secret `SUPABASE_SECRET_KEY`;
+- org variables `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `USER_SERVICE_URL`, `LISTING_SERVICE_URL` and `TRADE_SERVICE_URL`.
 - org variables `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `USER_SERVICE_URL`, `LISTING_SERVICE_URL` and `CHAT_SERVICE_URL`.
 - org variables `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `USER_SERVICE_URL`, `LISTING_SERVICE_URL` and `FEED_SERVICE_URL`.
 
