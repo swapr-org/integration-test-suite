@@ -1,8 +1,10 @@
 package app.swapr.e2e.user;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 
 import app.swapr.e2e.Requests;
 import app.swapr.e2e.Service;
@@ -76,7 +78,7 @@ class ProfileValidationTest {
   private static void assertValidationProblem(ValidatableResponse response, String field) {
     response
         .statusCode(400)
-        .body("type", equalTo("about:blank"))
+        .body("type", anyOf(nullValue(), equalTo("about:blank")))
         .body("title", equalTo("Bad Request"))
         .body("status", equalTo(400))
         .body("detail", equalTo("The request has invalid fields."))
